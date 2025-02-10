@@ -1,0 +1,98 @@
+from abc import ABC, abstractmethod
+
+# Single Responsibility Principle (SRP)
+class Product:
+    def __init__(self, product_id, name, price):
+        self.product_id = product_id
+        self.name = name
+        self.price = price
+
+class Inventory:
+    def __init__(self, notifier):
+        self.products = {}
+        self.notifier = notifier
+
+    def add_product(self, product, quantity):
+        self.products[product.product_id] = {'product': product, 'quantity': quantity}
+        self.notifier.notify(f"Added {quantity} of {product.name}")
+
+    def update_stock(self, product_id, quantity):
+        if product_id in self.products:
+            self.products[product_id]['quantity'] += quantity
+
+    def get_stock(self, product_id):
+        return self.products.get(product_id, {}).get('quantity', 0)
+
+    def list_products(self):
+        return [f"{p['product'].name}: {p['quantity']} in stock" for p in self.products.values()]
+
+    def process_order(self, product_id, quantity):
+        if product_id in self.products and self.products[product_id]['quantity'] >= quantity:
+            self.products[product_id]['quantity'] -= quantity
+            self.notifier.notify(f"Processed order for {quantity} of {self.products[product_id]['product'].name}")
+        else:
+            self.notifier.notify("Order cannot be processed due to insufficient stock.")
+
+# Open/Closed Principle (OCP)
+class Discount:
+    def apply_discount(self, product):
+        return product.price
+
+class SeasonalDiscount(Discount):
+    def apply_discount(self, product):
+        return product.price * 0.9
+
+class ClearanceDiscount(Discount):
+    def apply_discount(self, product):
+        return product.price * 0.5
+
+# Liskov Substitution Principle (LSP)
+class TaxableProduct(Product):
+    def get_price(self):
+        return self.price * 1.1
+
+# Interface Segregation Principle (ISP)
+class StockManager(ABC):
+    @abstractmethod
+    def add_product(self, product, quantity):
+        pass
+
+    @abstractmethod
+    def update_stock(self, product_id, quantity):
+        pass
+
+class Reporting(ABC):
+    @abstractmethod
+    def generate_report(self):
+        pass
+
+# Dependency Inversion Principle (DIP)
+class Notifier(ABC):
+    @abstractmethod
+    def notify(self, message):
+        pass
+
+class EmailNotifier(Notifier):
+    def notify(self, message):
+        print(f"Email sent: {message}")
+
+# Instantiate objects and perform operations
+notifier = EmailNotifier()
+inventory = Inventory(notifier)
+
+# Create products
+product1 = Product(1, "Laptop", 1000)
+product2 = Product(2, "Mouse", 25)
+
+# Add products to inventory
+inventory.add_product(product1, 10)
+inventory.add_product(product2, 50)
+
+# Process orders
+inventory.process_order(1, 2)  # Process order for 2 Laptops
+inventory.process_order(2, 5)  # Process order for 5 Mice
+inventory.process_order(2, 60)  # Attempt to order more Mice than available
+
+# List current inventory
+print("Current Inventory:")
+print("\n".join(inventory.list_products()))
