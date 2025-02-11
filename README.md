@@ -1,1 +1,1 @@
-# Product-Inventory-Manager
+# OOPS Solid Principles
